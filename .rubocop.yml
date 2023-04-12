@@ -1,0 +1,30 @@
+AllCops:
+  NewCops: enable  
+  Exclude:
+    - 'vendor/bundle/**/*'
+    - 'db/schema.rb'
+    - 'bin/bundle'
+    - 'bin/importmap'
+    - 'bin/rails'
+    - 'bin/rake'
+    - 'bin/setup'
+    - 'config/puma.rb'
+
+# ドキュメントの無い public class を許可する
+Style/Documentation:
+  Enabled: false
+
+Style/StringLiterals:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Exclude:
+    - 'config/*.rb'
+    - 'config/**/*.rb'
+    - 'config.ru'
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+    - 'config/routes.rb'
+
