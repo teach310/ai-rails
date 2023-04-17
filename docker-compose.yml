@@ -12,6 +12,7 @@ services:
       - "./mysql/my.cnf:/etc/mysql/conf.d/my.cnf" # 日本語をデータとして使うために必要
   server:
     build: .
+    stdin_open: true
     tty: true
     volumes:
       - .:/myapp
