@@ -5,7 +5,7 @@ module Toio
     def generate(src_messages = [])
       response = post_chatgpt(src_messages)
       chatgpt_content = response.dig("choices", 0, "message", "content")
-      extract_lua(chatgpt_content)
+      replace_atan2_to_atan(extract_lua(chatgpt_content))
     end
 
     def build_messages(src_messages)
@@ -14,7 +14,7 @@ module Toio
 
     def extract_lua(chatgpt_content)
       # 最初の文字がfunctionの時はそのまま返す
-      return chatgpt_content if chatgpt_content.start_with?('function')
+      return chatgpt_content if chatgpt_content.start_with?('function') || chatgpt_content.start_with?('local')
       
       # 「```」という文字列を含む場合には
       if chatgpt_content.include?('```')
@@ -30,6 +30,10 @@ module Toio
     end
 
     private
+
+    def replace_atan2_to_atan(lua)
+      lua.gsub('math.atan2', 'math.atan')
+    end
 
     def extract_lua_from_code_block(chatgpt_content)
       regex = /^```.*?\r?\n((.*?\r?\n)*?)```/m;
@@ -60,6 +64,8 @@ module Toio
       <<~CONTENT
         You are code generator of Lua.
 
+        when you move multiple cubes, normaly you should move cubes parallel.
+
         ## Output Format
         
         function routine()
@@ -82,17 +88,30 @@ module Toio
         cubeCommand:Move(id, left, right, durationMs)
 
         // seconds | duration seconds | range (0.1~30.0)
-        coroutine.yield(CS.UnityEngine.WaitForSeconds(seconds))
+        // return IEnumerator
+        CS.UnityEngine.WaitForSeconds(seconds)
 
         // Move to target world position
-        coroutine.yield(cubeCommand:Navi2TargetCoroutine('cube1', x, y))
+        // return CSharp IEnumerator
+        cubeCommand:Navi2TargetCoroutine(id, x, y)
 
         // Look to target rotation
         // deg: 0~359
+        // return CSharp IEnumerator
         // example) look to right: 0, look to top: -90
-        coroutine.yield(cubeCommand:Rotate2DegCoroutine('cube1', deg))
+        cubeCommand:Rotate2DegCoroutine(id, deg)
+
+        cubeCommand:GetCubePosX(id)
+        cubeCommand:GetCubePosY(id)
+
+        // wait until coroutine finished
+        coroutine.yield(IEnumerator)
         
-        ## Example1 move by motor speed
+        // Unity Start Coroutine Use this command to run coroutine parallel
+        // return CSharp IEnumerator
+        csStartCoroutine(IEnumerator)
+
+        ## Example move by motor speed
 
         function routine()
           cubeCommand:ShowMessage('start!')
@@ -103,14 +122,77 @@ module Toio
           cubeCommand:ShowMessage('end!')
         end
 
-        ## Example2 set start position
+        ## Example go to start position
 
         function routine()
-          cubeCommand:ShowMessage('Go to start position (=center) and look forward')
+          cubeCommand:ShowMessage('Go to start position and look forward')
           coroutine.yield(cubeCommand:Navi2TargetCoroutine('cube1', 250, 250))
           coroutine.yield(cubeCommand:Rotate2DegCoroutine('cube1', -90))
           cubeCommand:ShowMessage('Ready!')
         end
+
+        ## Example move each cube parallel
+
+        function routine()
+          cubeCommand:ShowMessage('move cube1 and cube2')
+          coroutine1 = csStartCoroutine(cubeCommand:Navi2TargetCoroutine('cube1', 100, 400))
+          coroutine2 = csStartCoroutine(cubeCommand:Navi2TargetCoroutine('cube2', 100, 100))
+          coroutine.yield(coroutine1)
+          coroutine.yield(coroutine2)
+          coroutine.yield(CS.UnityEngine.WaitForSeconds(0.5))
+          cubeCommand:ShowMessage('Finish!')
+        end
+
+        ## Example go to start position each cube
+
+        function routine()
+          cubeCommand:ShowMessage('Go to start position and look forward')
+          coroutine1 = csStartCoroutine(cubeCommand:Navi2TargetCoroutine('cube1', 350, 250))
+          coroutine2 = csStartCoroutine(cubeCommand:Navi2TargetCoroutine('cube2', 150, 250))
+          coroutine.yield(coroutine1)
+          coroutine.yield(cubeCommand:Rotate2DegCoroutine('cube1', -90))
+          coroutine.yield(coroutine2)
+          coroutine.yield(cubeCommand:Rotate2DegCoroutine('cube2', -90))
+          coroutine.yield(CS.UnityEngine.WaitForSeconds(0.5))
+          cubeCommand:ShowMessage('Finish!')
+        end
+
+        ## Example move each cube parallel and rotate
+
+        function routine()
+          cubeCommand:ShowMessage('move cube1 and cube2 and look next point')
+          coroutine1 = csStartCoroutine(cubeCommand:Navi2TargetCoroutine('cube1', 100, 400))
+          coroutine2 = csStartCoroutine(cubeCommand:Navi2TargetCoroutine('cube2', 100, 100))
+          coroutine.yield(coroutine1)
+          coroutine.yield(cubeCommand:Rotate2DegCoroutine('cube1', 0))
+          coroutine.yield(coroutine2)
+          coroutine.yield(cubeCommand:Rotate2DegCoroutine('cube2', -90))
+          coroutine.yield(CS.UnityEngine.WaitForSeconds(0.5))
+          cubeCommand:ShowMessage('Finish!')
+        end
+
+        ## Example start lua coroutine as cs coroutine
+
+        local util = require 'xlua.util'
+
+        function csStartLuaCoroutine(...)
+            return csStartCoroutine(util.cs_generator(...))
+        end
+
+        function routine()
+            cubeCommand:ShowMessage('Start!')
+            csCoroutine = csStartLuaCoroutine(showIdLater, 'Hello')
+            coroutine.yield(csCoroutine)
+            cubeCommand:ShowMessage('Finished!')
+        end
+
+        function showIdLater(id)
+            coroutine.yield(CS.UnityEngine.WaitForSeconds(0.5))
+            cubeCommand:ShowMessage(id)
+        end
+
+        ## Restrictions
+        dont use 「while true」to avoide infinite loop
       CONTENT
     end
 
