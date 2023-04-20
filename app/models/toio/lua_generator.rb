@@ -109,7 +109,7 @@ module Toio
         
         // Unity Start Coroutine Use this command to run coroutine parallel
         // return CSharp IEnumerator
-        csStartCoroutine(IEnumerator)
+        startCoroutine(IEnumerator or function)
 
         ## Example move by motor speed
 
@@ -135,8 +135,8 @@ module Toio
 
         function routine()
           cubeCommand:ShowMessage('move cube1 and cube2')
-          coroutine1 = csStartCoroutine(cubeCommand:Navi2TargetCoroutine('cube1', 100, 400))
-          coroutine2 = csStartCoroutine(cubeCommand:Navi2TargetCoroutine('cube2', 100, 100))
+          coroutine1 = startCoroutine(cubeCommand:Navi2TargetCoroutine('cube1', 100, 400))
+          coroutine2 = startCoroutine(cubeCommand:Navi2TargetCoroutine('cube2', 100, 100))
           coroutine.yield(coroutine1)
           coroutine.yield(coroutine2)
           coroutine.yield(CS.UnityEngine.WaitForSeconds(0.5))
@@ -147,8 +147,8 @@ module Toio
 
         function routine()
           cubeCommand:ShowMessage('Go to start position and look forward')
-          coroutine1 = csStartCoroutine(cubeCommand:Navi2TargetCoroutine('cube1', 350, 250))
-          coroutine2 = csStartCoroutine(cubeCommand:Navi2TargetCoroutine('cube2', 150, 250))
+          coroutine1 = startCoroutine(cubeCommand:Navi2TargetCoroutine('cube1', 350, 250))
+          coroutine2 = startCoroutine(cubeCommand:Navi2TargetCoroutine('cube2', 150, 250))
           coroutine.yield(coroutine1)
           coroutine.yield(cubeCommand:Rotate2DegCoroutine('cube1', -90))
           coroutine.yield(coroutine2)
@@ -161,8 +161,8 @@ module Toio
 
         function routine()
           cubeCommand:ShowMessage('move cube1 and cube2 and look next point')
-          coroutine1 = csStartCoroutine(cubeCommand:Navi2TargetCoroutine('cube1', 100, 400))
-          coroutine2 = csStartCoroutine(cubeCommand:Navi2TargetCoroutine('cube2', 100, 100))
+          coroutine1 = startCoroutine(cubeCommand:Navi2TargetCoroutine('cube1', 100, 400))
+          coroutine2 = startCoroutine(cubeCommand:Navi2TargetCoroutine('cube2', 100, 100))
           coroutine.yield(coroutine1)
           coroutine.yield(cubeCommand:Rotate2DegCoroutine('cube1', 0))
           coroutine.yield(coroutine2)
@@ -171,27 +171,24 @@ module Toio
           cubeCommand:ShowMessage('Finish!')
         end
 
-        ## Example start lua coroutine as cs coroutine
-
-        local util = require 'xlua.util'
-
-        function csStartLuaCoroutine(...)
-            return csStartCoroutine(util.cs_generator(...))
-        end
+        ## Example start lua coroutine
 
         function routine()
-            cubeCommand:ShowMessage('Start!')
-            csCoroutine = csStartLuaCoroutine(showIdLater, 'Hello')
-            coroutine.yield(csCoroutine)
-            cubeCommand:ShowMessage('Finished!')
+          cubeCommand:ShowMessage('Start!')
+          csCoroutine = startCoroutine(showIdLater, 'Hello')
+          coroutine.yield(csCoroutine)
+          coroutine1 = startCoroutine(cubeCommand:Navi2TargetCoroutine('cube1', 100, 100))
+          coroutine.yield(coroutine1)
+          cubeCommand:ShowMessage('Finished!')
         end
 
         function showIdLater(id)
-            coroutine.yield(CS.UnityEngine.WaitForSeconds(0.5))
-            cubeCommand:ShowMessage(id)
+          coroutine.yield(CS.UnityEngine.WaitForSeconds(0.5))
+          cubeCommand:ShowMessage(id)
         end
 
         ## Restrictions
+
         dont use 「while true」to avoide infinite loop
       CONTENT
     end
