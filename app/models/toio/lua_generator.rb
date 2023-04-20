@@ -5,7 +5,9 @@ module Toio
     def generate(src_messages = [])
       response = post_chatgpt(src_messages)
       chatgpt_content = response.dig("choices", 0, "message", "content")
-      replace_atan2_to_atan(extract_lua(chatgpt_content))
+      replace_atan2_to_atan(extract_lua(chatgpt_content)).tap do |lua|
+        Rails.logger.info lua
+      end
     end
 
     def build_messages(src_messages)
@@ -85,6 +87,7 @@ module Toio
         // left       | left motor speed  | range (0~100)
         // right      | right motor speed | range (0~100)
         // durationMs | duration ms       | range (0~2550)
+        // return null
         cubeCommand:Move(id, left, right, durationMs)
 
         // seconds | duration seconds | range (0.1~30.0)
@@ -98,7 +101,7 @@ module Toio
         // Look to target rotation
         // deg: 0~359
         // return CSharp IEnumerator
-        // example) look to right: 0, look to top: -90
+        // example) look to right: 0, look to top: 90
         cubeCommand:Rotate2DegCoroutine(id, deg)
 
         cubeCommand:GetCubePosX(id)
@@ -107,32 +110,46 @@ module Toio
         // wait until coroutine finished
         coroutine.yield(IEnumerator)
         
-        // Unity Start Coroutine Use this command to run coroutine parallel
+        // Start Coroutine Use this command to run coroutine parallel
         // return CSharp IEnumerator
         startCoroutine(IEnumerator or function)
 
         ## Example move by motor speed
 
+        ```
         function routine()
           cubeCommand:ShowMessage('start!')
-          cubeCommand:Move('cube1', 50, -50, 100)
+          cubeCommand:Move('cube1', 50, -50, 500)
           coroutine.yield(CS.UnityEngine.WaitForSeconds(1))
-          cubeCommand:Move('cube1', 50, -50, 100)
+          cubeCommand:Move('cube1', 50, -50, 500)
           coroutine.yield(CS.UnityEngine.WaitForSeconds(1))
           cubeCommand:ShowMessage('end!')
         end
+        ```
+
+        ## Example spin
+        
+        ```
+        function routine()
+          cubeCommand:Move('cube1', 60, -60, 1000)
+          coroutine.yield(CS.UnityEngine.WaitForSeconds(0.2))
+        end
+        ```
 
         ## Example go to start position
 
+        ```
         function routine()
           cubeCommand:ShowMessage('Go to start position and look forward')
           coroutine.yield(cubeCommand:Navi2TargetCoroutine('cube1', 250, 250))
           coroutine.yield(cubeCommand:Rotate2DegCoroutine('cube1', -90))
           cubeCommand:ShowMessage('Ready!')
         end
+        ```
 
         ## Example move each cube parallel
 
+        ```
         function routine()
           cubeCommand:ShowMessage('move cube1 and cube2')
           coroutine1 = startCoroutine(cubeCommand:Navi2TargetCoroutine('cube1', 100, 400))
@@ -142,9 +159,11 @@ module Toio
           coroutine.yield(CS.UnityEngine.WaitForSeconds(0.5))
           cubeCommand:ShowMessage('Finish!')
         end
+        ```
 
         ## Example go to start position each cube
 
+        ```
         function routine()
           cubeCommand:ShowMessage('Go to start position and look forward')
           coroutine1 = startCoroutine(cubeCommand:Navi2TargetCoroutine('cube1', 350, 250))
@@ -156,9 +175,11 @@ module Toio
           coroutine.yield(CS.UnityEngine.WaitForSeconds(0.5))
           cubeCommand:ShowMessage('Finish!')
         end
+        ```
 
         ## Example move each cube parallel and rotate
 
+        ```
         function routine()
           cubeCommand:ShowMessage('move cube1 and cube2 and look next point')
           coroutine1 = startCoroutine(cubeCommand:Navi2TargetCoroutine('cube1', 100, 400))
@@ -170,9 +191,11 @@ module Toio
           coroutine.yield(CS.UnityEngine.WaitForSeconds(0.5))
           cubeCommand:ShowMessage('Finish!')
         end
+        ```
 
         ## Example start lua coroutine
 
+        ```
         function routine()
           cubeCommand:ShowMessage('Start!')
           csCoroutine = startCoroutine(showIdLater, 'Hello')
@@ -186,6 +209,7 @@ module Toio
           coroutine.yield(CS.UnityEngine.WaitForSeconds(0.5))
           cubeCommand:ShowMessage(id)
         end
+        ```
 
         ## Restrictions
 
