@@ -119,9 +119,9 @@ module Toio
         ```
         function routine()
           cubeCommand:ShowMessage('start!')
-          cubeCommand:Move('cube1', 50, -50, 500)
+          coroutine.yield(cubeCommand:Move('cube1', 50, -50, 500))
           coroutine.yield(CS.UnityEngine.WaitForSeconds(1))
-          cubeCommand:Move('cube1', 50, -50, 500)
+          coroutine.yield(cubeCommand:Move('cube1', 50, -50, 500))
           coroutine.yield(CS.UnityEngine.WaitForSeconds(1))
           cubeCommand:ShowMessage('end!')
         end
@@ -131,7 +131,7 @@ module Toio
         
         ```
         function routine()
-          cubeCommand:Move('cube1', 60, -60, 1000)
+          coroutine.yield(cubeCommand:Move('cube1', 60, -60, 1000))
           coroutine.yield(CS.UnityEngine.WaitForSeconds(0.2))
         end
         ```
